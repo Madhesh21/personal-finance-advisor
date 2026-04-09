@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from utils.csv_parser import parse_csv
 from utils.db_helper import get_category_map, bulk_insert_transactions
 import mysql.connector
+from routes.categorize import engine as category_engine
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -48,7 +49,7 @@ def upload_csv():
     # ── Parse CSV ───────────────────────────────────────────────────────────
     try:
         category_map = get_category_map()     # {name_lower: id}
-        records, errors = parse_csv(file, category_map)
+        records, errors = parse_csv(file, category_map, category_engine=category_engine)
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 422
 

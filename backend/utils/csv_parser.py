@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime
 
 
-REQUIRED_COLUMNS = {'date', 'amount', 'category', 'description'}
+REQUIRED_COLUMNS = {'date', 'amount', 'description'}
 
 # Accepted date formats to try when parsing
 DATE_FORMATS = [
@@ -21,13 +21,14 @@ def _parse_date(date_str: str) -> str:
     raise ValueError(f"Unrecognised date format: '{date_str}'")
 
 
-def parse_csv(file_obj, category_map: dict) -> tuple[list[dict], list[str]]:
+def parse_csv(file_obj, category_map: dict, category_engine=None) -> tuple[list[dict], list[str]]:
     """
     Parse a CSV file object for bulk transaction import.
 
     Args:
         file_obj    : File-like object (from Flask request.files)
         category_map: dict mapping category_name (lowercase) -> category_id
+        category_engine: CategoryEngine instance to use for missing/unknown categories
 
     Returns:
         (records, errors)
@@ -74,12 +75,21 @@ def parse_csv(file_obj, category_map: dict) -> tuple[list[dict], list[str]]:
             continue
 
         # ── Validate Category ──────────────────────────────────────────────────
-        cat_name = str(row['category']).strip().lower()
+        auto_categorized = 0
+        cat_name = str(row.get('category', '')).strip().lower()
         category_id = category_map.get(cat_name)
+        
+        if category_id is None and category_engine is not None:
+            # Predict
+            description = str(row.get('description', '')).strip()[:255]
+            predicted_cat, conf, _ = category_engine.predict(description)
+            if predicted_cat:
+                category_id = category_map.get(predicted_cat.lower())
+                auto_categorized = 1
+
         if category_id is None:
             errors.append(
-                f"Row {row_num}: Unknown category '{row['category']}'. "
-                f"Available: {', '.join(sorted(category_map.keys()))}"
+                f"Row {row_num}: Unknown category '{row.get('category', '')}' and auto-categorization failed."
             )
             continue
 
@@ -101,6 +111,7 @@ def parse_csv(file_obj, category_map: dict) -> tuple[list[dict], list[str]]:
             "category_id":      category_id,
             "transaction_type": tx_type,
             "description":      description,
+            "auto_categorized": auto_categorized,
         })
 
     return records, errors

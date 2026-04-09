@@ -36,9 +36,9 @@ def bulk_insert_transactions(records: list[dict], user_id: int) -> int:
 
     query = """
         INSERT INTO transactions
-            (user_id, category_id, amount, transaction_type, transaction_date, description)
+            (user_id, category_id, amount, transaction_type, transaction_date, description, auto_categorized)
         VALUES
-            (%s, %s, %s, %s, %s, %s)
+            (%s, %s, %s, %s, %s, %s, %s)
     """
     data = [
         (
@@ -48,6 +48,7 @@ def bulk_insert_transactions(records: list[dict], user_id: int) -> int:
             r['transaction_type'],
             r['transaction_date'],
             r['description'],
+            r.get('auto_categorized', 0)
         )
         for r in records
     ]

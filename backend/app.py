@@ -17,6 +17,7 @@ from routes.transactions import transactions_bp
 from routes.categories   import categories_bp
 from routes.budgets      import budgets_bp
 from routes.upload       import upload_bp
+from routes.categorize   import categorize_bp
 
 
 def create_app() -> Flask:
@@ -35,6 +36,7 @@ def create_app() -> Flask:
     app.register_blueprint(categories_bp)
     app.register_blueprint(budgets_bp)
     app.register_blueprint(upload_bp)
+    app.register_blueprint(categorize_bp)
 
     # ── Health-check route ──────────────────────────────────────────────────
     @app.route('/api/health', methods=['GET'])
@@ -60,7 +62,9 @@ def create_app() -> Flask:
                 "add_category":       "POST /api/categories",
                 "budgets":            "GET  /api/budgets",
                 "set_budget":         "POST /api/budgets",
+                "delete_budget":      "DELETE /api/budgets/<id>",
                 "budget_summary":     "GET  /api/budgets/summary",
+                "budget_alerts":      "GET  /api/budgets/alerts",
                 "upload_csv":         "POST /api/upload/csv",
                 "csv_template":       "GET  /api/upload/template",
             }

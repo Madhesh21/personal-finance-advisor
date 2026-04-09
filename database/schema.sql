@@ -31,6 +31,7 @@ CREATE TABLE transactions (
     transaction_type ENUM('INCOME', 'EXPENSE') NOT NULL,
     transaction_date DATE NOT NULL,
     description VARCHAR(255),
+    auto_categorized TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE

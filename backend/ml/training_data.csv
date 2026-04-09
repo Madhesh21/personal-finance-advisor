@@ -1,0 +1,51 @@
+description,category
+"Uber Eats delivery",Food
+"Starbucks coffee",Food
+"Grocery shopping at Walmart",Food
+"McDonald's lunch",Food
+"Domino's Pizza",Food
+"Whole Foods Market",Food
+"Zomato delivery",Food
+"Subway sandwich",Food
+"Monthly apartment rent",Rent
+"Rent payment for April",Rent
+"Lease payment",Rent
+"Room rent",Rent
+"Uber ride to office",Transport
+"Ola cab",Transport
+"Metro card recharge",Transport
+"Petrol pump fuel",Transport
+"Chevron gas station",Transport
+"Flight to New York",Transport
+"Electric bill payment",Utilities
+"Water bill",Utilities
+"Internet broadband bill",Utilities
+"Xfinity monthly bill",Utilities
+"AT&T mobile bill",Utilities
+"Netflix subscription",Entertainment
+"Spotify premium",Entertainment
+"Cinema tickets",Entertainment
+"Steam game purchase",Entertainment
+"Movie night",Entertainment
+"Pharmacy meds",Healthcare
+"Doctor consultation fee",Healthcare
+"Hospital bill",Healthcare
+"Dental clinic visit",Healthcare
+"Health insurance premium",Healthcare
+"Amazon order",Shopping
+"Flipkart purchase",Shopping
+"H&M clothes",Shopping
+"Nike shoes",Shopping
+"Zara store",Shopping
+"Monthly salary credit",Salary
+"Payroll deposit",Salary
+"Bonus payment",Salary
+"Freelance income",Salary
+"Stock market investment",Investments
+"Mutual fund SIP",Investments
+"Crypto purchase Coinbase",Investments
+"Fixed deposit",Investments
+"Udemy course",Education
+"College tuition fee",Education
+"Textbooks purchase",Education
+"School supplies",Education
