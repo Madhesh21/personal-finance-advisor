@@ -19,6 +19,7 @@ from routes.budgets      import budgets_bp
 from routes.upload       import upload_bp
 from routes.categorize   import categorize_bp
 from routes.recommendations import recommendations_bp
+from routes.analytics    import analytics_bp
 
 
 def create_app() -> Flask:
@@ -39,6 +40,7 @@ def create_app() -> Flask:
     app.register_blueprint(upload_bp)
     app.register_blueprint(categorize_bp)
     app.register_blueprint(recommendations_bp)
+    app.register_blueprint(analytics_bp)
 
     # ── Health-check route ──────────────────────────────────────────────────
     @app.route('/api/health', methods=['GET'])
@@ -68,6 +70,9 @@ def create_app() -> Flask:
                 "budget_summary":     "GET  /api/budgets/summary",
                 "budget_alerts":      "GET  /api/budgets/alerts",
                 "recommendations":    "GET  /api/recommendations",
+                "analytics_trends":   "GET  /api/analytics/trends",
+                "analytics_dist":     "GET  /api/analytics/distribution",
+                "analytics_metrics":  "GET  /api/analytics/metrics",
                 "upload_csv":         "POST /api/upload/csv",
                 "csv_template":       "GET  /api/upload/template",
             }

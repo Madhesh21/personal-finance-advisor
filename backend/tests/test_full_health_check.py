@@ -105,11 +105,24 @@ recs = r.json().get('data', [])
 if recs:
     print(f'       Example Rec: {recs[0]["title"]}')
 
+# ── Phase 6: Analytics & Insights ─────────────────────────────────────────────
+print()
+print('== PHASE 6: Analytics & Insights ==')
+
+r = requests.get(f'{BASE}/api/analytics/trends', params={'user_id': UID, 'months': 3})
+check('GET /api/analytics/trends', r.status_code == 200 and r.json().get('success'))
+
+r = requests.get(f'{BASE}/api/analytics/distribution', params={'user_id': UID, 'month_year': '2026-03'})
+check('GET /api/analytics/distribution', r.status_code == 200 and r.json().get('success'))
+
+r = requests.get(f'{BASE}/api/analytics/metrics', params={'user_id': UID, 'month_year': '2026-03'})
+check('GET /api/analytics/metrics', r.status_code == 200 and r.json().get('success'))
+
 # Final verdict
 print()
 print('=' * 48)
 if ALL_PASS:
-    print('OVERALL: ALL SYSTEMS GREEN -- Phases 1-5 OK')
+    print('OVERALL: ALL SYSTEMS GREEN -- Phases 1-6 OK')
 else:
     print('OVERALL: SOME CHECKS FAILED -- review above')
 print('=' * 48)
