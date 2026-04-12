@@ -95,11 +95,21 @@ if r.json().get('alerts'):
 r = requests.delete(f'{BASE}/api/budgets/{bid}')
 check('DELETE /api/budgets/<id>', r.json().get('success'))
 
+# ── Phase 5: Recommendation Engine (Core AI) ──────────────────────────────────
+print()
+print('== PHASE 5: Recommendation Engine ==')
+
+r = requests.get(f'{BASE}/api/recommendations', params={'user_id': UID, 'month_year': '2026-03'})
+check('GET /api/recommendations', r.status_code == 200 and r.json().get('success'))
+recs = r.json().get('data', [])
+if recs:
+    print(f'       Example Rec: {recs[0]["title"]}')
+
 # Final verdict
 print()
 print('=' * 48)
 if ALL_PASS:
-    print('OVERALL: ALL SYSTEMS GREEN -- Phases 1-4 OK')
+    print('OVERALL: ALL SYSTEMS GREEN -- Phases 1-5 OK')
 else:
     print('OVERALL: SOME CHECKS FAILED -- review above')
 print('=' * 48)
