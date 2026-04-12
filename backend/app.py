@@ -20,6 +20,7 @@ from routes.upload       import upload_bp
 from routes.categorize   import categorize_bp
 from routes.recommendations import recommendations_bp
 from routes.analytics    import analytics_bp
+from routes.chatbot      import chatbot_bp
 
 
 def create_app() -> Flask:
@@ -41,6 +42,7 @@ def create_app() -> Flask:
     app.register_blueprint(categorize_bp)
     app.register_blueprint(recommendations_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(chatbot_bp)
 
     # ── Health-check route ──────────────────────────────────────────────────
     @app.route('/api/health', methods=['GET'])
@@ -75,6 +77,7 @@ def create_app() -> Flask:
                 "analytics_metrics":  "GET  /api/analytics/metrics",
                 "upload_csv":         "POST /api/upload/csv",
                 "csv_template":       "GET  /api/upload/template",
+                "chatbot":            "POST /api/chat"
             }
         }), 200
 
