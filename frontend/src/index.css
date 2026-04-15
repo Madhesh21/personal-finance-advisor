@@ -1,0 +1,71 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@theme {
+  --color-base: #0a1628;
+  --color-card: #112240;
+  --color-emerald-deep: #064e3b;
+  --color-emerald-accent: #10b981;
+  --color-gold-accent: #f59e0b;
+}
+
+@layer base {
+  body {
+    @apply bg-[#0a1628] text-slate-100 antialiased;
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  /* Solid dark cards with left border accent */
+  .fin-card {
+    @apply bg-[#112240] border border-slate-700/50 shadow-lg rounded-xl overflow-hidden;
+  }
+  
+  .fin-card-emerald {
+    @apply border-l-4 border-l-emerald-500 bg-[#112240] shadow-lg rounded-xl;
+  }
+  
+  .fin-card-gold {
+    @apply border-l-4 border-l-amber-400 bg-[#112240] shadow-lg rounded-xl;
+  }
+  
+  .fin-card-rose {
+    @apply border-l-4 border-l-rose-500 bg-[#112240] shadow-lg rounded-xl;
+  }
+  
+  .fin-card-teal {
+    @apply border-l-4 border-l-teal-500 bg-[#112240] shadow-lg rounded-xl;
+  }
+
+  /* Form Inputs */
+  .fin-input {
+    @apply w-full bg-[#0a1628] border border-slate-700 text-slate-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all;
+  }
+
+  /* Buttons */
+  .fin-button-emerald {
+    @apply bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg transition-colors shadow-md;
+  }
+  
+  .fin-button-gold {
+    @apply bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold px-4 py-2 rounded-lg transition-colors shadow-md;
+  }
+
+  .fin-button-outline {
+    @apply border border-slate-600 hover:border-slate-400 text-slate-300 hover:text-white font-medium px-4 py-2 rounded-lg transition-colors;
+  }
+
+  /* Status Badges */
+  .fin-badge-emerald {
+    @apply bg-emerald-500/20 text-emerald-400 font-medium px-2.5 py-1 rounded-full text-xs;
+  }
+  
+  .fin-badge-amber {
+    @apply bg-amber-500/20 text-amber-400 font-medium px-2.5 py-1 rounded-full text-xs;
+  }
+
+  .fin-badge-rose {
+    @apply bg-rose-500/20 text-rose-400 font-medium px-2.5 py-1 rounded-full text-xs;
+  }
+}
