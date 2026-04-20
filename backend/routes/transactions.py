@@ -122,31 +122,44 @@ def add_transaction():
     user_id         = data.get('user_id', 1)
     category_id     = data.get('category_id')
     amount          = data.get('amount')
-    transaction_type = data.get('transaction_type', 'EXPENSE').upper()
+    transaction_type = data.get('transaction_type')
+    if transaction_type:
+        transaction_type = transaction_type.upper()
     transaction_date = data.get('transaction_date', datetime.now().strftime('%Y-%m-%d'))
     description     = data.get('description', '').strip()[:255]
-
-    # Validate
-    errors = []
-    if category_id is None:
-        errors.append("category_id is required")
-    if amount is None:
-        errors.append("amount is required")
-    elif float(amount) <= 0:
-        errors.append("amount must be greater than 0")
-    if transaction_type not in ('INCOME', 'EXPENSE'):
-        errors.append("transaction_type must be INCOME or EXPENSE")
-    try:
-        datetime.strptime(str(transaction_date), '%Y-%m-%d')
-    except ValueError:
-        errors.append("transaction_date must be in YYYY-MM-DD format")
-
-    if errors:
-        return jsonify({"success": False, "errors": errors}), 400
 
     try:
         conn   = get_db_connection()
         cursor = conn.cursor(dictionary=True)
+
+        # ── Auto-detect/Enforce type if category is known ─────────────────────
+        cursor.execute("SELECT category_type FROM categories WHERE category_id = %s", (category_id,))
+        cat_row = cursor.fetchone()
+        
+        if cat_row:
+            # Overwrite user-provided type if it conflicts with category type
+            transaction_type = cat_row['category_type']
+        elif not transaction_type:
+            # Fallback if category not found (shouldn't happen with valid FK)
+            transaction_type = 'EXPENSE'
+
+        # Validate
+        errors = []
+        if category_id is None:
+            errors.append("category_id is required")
+        if amount is None:
+            errors.append("amount is required")
+        elif float(amount) <= 0:
+            errors.append("amount must be greater than 0")
+        if transaction_type not in ('INCOME', 'EXPENSE'):
+            errors.append("transaction_type must be INCOME or EXPENSE")
+        try:
+            datetime.strptime(str(transaction_date), '%Y-%m-%d')
+        except ValueError:
+            errors.append("transaction_date must be in YYYY-MM-DD format")
+
+        if errors:
+            return jsonify({"success": False, "errors": errors}), 400
 
         cursor.execute(
             """

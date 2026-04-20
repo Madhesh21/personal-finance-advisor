@@ -10,9 +10,15 @@ def get_category_map() -> dict:
     conn = get_db_connection()
     try:
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT category_id, category_name FROM categories")
+        cursor.execute("SELECT category_id, category_name, category_type FROM categories")
         rows = cursor.fetchall()
-        return {row['category_name'].lower(): row['category_id'] for row in rows}
+        return {
+            row['category_name'].lower(): {
+                'id': row['category_id'],
+                'type': row['category_type']
+            }
+            for row in rows
+        }
     finally:
         cursor.close()
         conn.close()

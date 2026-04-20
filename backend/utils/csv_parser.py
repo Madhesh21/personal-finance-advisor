@@ -77,14 +77,16 @@ def parse_csv(file_obj, category_map: dict, category_engine=None) -> tuple[list[
         # ── Validate Category ──────────────────────────────────────────────────
         auto_categorized = 0
         cat_name = str(row.get('category', '')).strip().lower()
-        category_id = category_map.get(cat_name)
+        cat_info = category_map.get(cat_name)
+        category_id = cat_info['id'] if cat_info else None
         
         if category_id is None and category_engine is not None:
             # Predict
             description = str(row.get('description', '')).strip()[:255]
             predicted_cat, conf, _ = category_engine.predict(description)
             if predicted_cat:
-                category_id = category_map.get(predicted_cat.lower())
+                cat_info = category_map.get(predicted_cat.lower())
+                category_id = cat_info['id'] if cat_info else None
                 auto_categorized = 1
 
         if category_id is None:
@@ -94,7 +96,10 @@ def parse_csv(file_obj, category_map: dict, category_engine=None) -> tuple[list[
             continue
 
         # ── Transaction Type ───────────────────────────────────────────────────
-        if has_type_col:
+        # Priority: Category's own type (if known) > CSV 'type' column > Default 'EXPENSE'
+        if cat_info:
+            tx_type = cat_info['type']
+        elif has_type_col and str(row['type']).strip():
             tx_type = str(row['type']).strip().upper()
             if tx_type not in ('INCOME', 'EXPENSE'):
                 errors.append(f"Row {row_num}: type must be INCOME or EXPENSE, got '{row['type']}'")

@@ -219,6 +219,7 @@ def budget_summary():
             SELECT
                 c.category_id,
                 c.category_name,
+                b.budget_id,
                 COALESCE(b.monthly_limit, 0)                         AS budget_limit,
                 COALESCE(SUM(t.amount), 0)                           AS actual_spent,
                 COALESCE(b.monthly_limit, 0) - COALESCE(SUM(t.amount), 0) AS remaining
@@ -234,7 +235,7 @@ def budget_summary():
                AND YEAR(t.transaction_date)  = %s
                AND MONTH(t.transaction_date) = %s
             WHERE c.category_type = 'EXPENSE'
-            GROUP BY c.category_id, c.category_name, b.monthly_limit
+            GROUP BY c.category_id, c.category_name, b.budget_id, b.monthly_limit
             ORDER BY actual_spent DESC
         """, (user_id, month_year, user_id, int(year), int(month)))
 

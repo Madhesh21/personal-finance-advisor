@@ -1,0 +1,21 @@
+date,amount,category,description,type
+01-04-2026,6000,,Monthly salary - April,INCOME
+01-04-2026,500,,Freelance web project payment,INCOME
+02-04-2026,1500,,Monthly apartment rent,EXPENSE
+03-04-2026,200,utilities,Electricity and water bill,EXPENSE
+04-04-2026,350,food,Weekly groceries - Big Bazaar,EXPENSE
+05-04-2026,80,,Zomato food delivery,EXPENSE
+06-04-2026,45,,Starbucks coffee,EXPENSE
+07-04-2026,120,transport,Uber rides this week,EXPENSE
+08-04-2026,50,,Monthly bus pass,EXPENSE
+09-04-2026,250,,Netflix + Spotify + Cinema,EXPENSE
+10-04-2026,90,,Pharmacy - medicines,EXPENSE
+11-04-2026,400,shopping,New shoes and clothes,EXPENSE
+12-04-2026,300,investments,SIP mutual fund deposit,EXPENSE
+13-04-2026,150,,Restaurant dinner with friends,EXPENSE
+14-04-2026,60,,Petrol,EXPENSE
+15-04-2026,200,entertainment,BookMyShow events,EXPENSE
+16-04-2026,75,healthcare,Doctor consultation,EXPENSE
+17-04-2026,180,,Weekly groceries,EXPENSE
+18-04-2026,100,utilities,Internet bill,EXPENSE
+19-04-2026,500,,Electronics purchase,EXPENSE
