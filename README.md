@@ -397,4 +397,4 @@ users ──< user_corrections >── categories
 
 ---
 
-> Built with ❤️ by Team Madhesh21
+> Built with ❤️ by Madhesh21
