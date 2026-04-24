@@ -4,7 +4,7 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Sector, LabelList,
   ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Percent, Calendar, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Percent, Calendar, Layers, ChevronLeft, ChevronRight, Sparkles, AlertTriangle, CheckCircle, Lightbulb, ShieldCheck, RefreshCw } from 'lucide-react';
 
 const COLORS = [
   '#10b981', '#f59e0b', '#3b82f6', '#f43f5e', '#8b5cf6', 
@@ -212,6 +212,24 @@ const Analytics = () => {
   const [distribution, setDistribution] = useState([]);
   const [trends, setTrends] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [insights, setInsights] = useState([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsRefreshing, setInsightsRefreshing] = useState(false);
+
+  const fetchInsights = async (isRefresh = false) => {
+    if (isRefresh) setInsightsRefreshing(true);
+    else setInsightsLoading(true);
+    try {
+      const targetMonth = viewType === 'Monthly' ? monthYear : new Date().toISOString().slice(0, 7);
+      const res = await axios.get(`/api/recommendations?month_year=${targetMonth}`);
+      if (res.data.success) setInsights(res.data.data);
+    } catch (err) {
+      console.error('Insights fetch error:', err);
+    } finally {
+      setInsightsLoading(false);
+      setInsightsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -238,6 +256,7 @@ const Analytics = () => {
       }
     };
     fetchAll();
+    fetchInsights();
   }, [monthYear, viewType]);
 
   const income = metrics?.total_income ?? 0;
@@ -333,6 +352,129 @@ const Analytics = () => {
           colorClass="bg-amber-500/20 text-amber-400" 
           borderClass="fin-card-gold"
         />
+      </div>
+
+      {/* ── AI-Powered Insights ── */}
+      <div className="animate-slide-up [animation-delay:0.1s] relative z-10">
+        {/* Section Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/30 to-indigo-600/20 border border-purple-500/30">
+              <Sparkles className="text-purple-400" size={20} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">AI-Powered Insights</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {viewType === 'Monthly' ? `Smart recommendations for ${monthYear}` : 'Based on your latest activity'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => fetchInsights(true)}
+            disabled={insightsRefreshing}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#112240] border border-slate-700/50 text-slate-400 hover:text-purple-400 hover:border-purple-500/40 transition-all text-xs font-semibold disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={insightsRefreshing ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        </div>
+
+        {/* Shimmer skeletons while loading */}
+        {insightsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-5 fin-card animate-pulse">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-700/60 flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-slate-700/60 rounded w-1/2" />
+                    <div className="h-3 bg-slate-700/40 rounded w-full" />
+                    <div className="h-3 bg-slate-700/40 rounded w-3/4" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : insights.length === 0 ? (
+          /* Empty state */
+          <div className="fin-card p-10 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <CheckCircle className="text-emerald-400" size={28} />
+            </div>
+            <div>
+              <p className="text-white font-bold text-lg">You're on track! 🎉</p>
+              <p className="text-slate-400 text-sm mt-1 max-w-sm">No alerts this period. Your spending looks healthy — keep up the great work!</p>
+            </div>
+          </div>
+        ) : (
+          /* Insight cards grid */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {insights.map((insight, idx) => {
+              const config = {
+                SAVINGS: {
+                  icon: <TrendingUp size={18} />,
+                  iconBg: 'bg-amber-500/15 text-amber-400',
+                  border: 'border-l-amber-500',
+                  pill: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+                  label: 'Savings'
+                },
+                BUDGET_EXCEEDED: {
+                  icon: <AlertTriangle size={18} />,
+                  iconBg: 'bg-rose-500/15 text-rose-400',
+                  border: 'border-l-rose-500',
+                  pill: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+                  label: 'Budget Alert'
+                },
+                HIGH_SPENDING: {
+                  icon: <Lightbulb size={18} />,
+                  iconBg: 'bg-orange-500/15 text-orange-400',
+                  border: 'border-l-orange-500',
+                  pill: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+                  label: 'High Spending'
+                },
+                EMERGENCY_FUND: {
+                  icon: <ShieldCheck size={18} />,
+                  iconBg: 'bg-emerald-500/15 text-emerald-400',
+                  border: 'border-l-emerald-500',
+                  pill: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                  label: 'Opportunity'
+                },
+              }[insight.type] || {
+                icon: <Sparkles size={18} />,
+                iconBg: 'bg-purple-500/15 text-purple-400',
+                border: 'border-l-purple-500',
+                pill: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+                label: 'Tip'
+              };
+
+              return (
+                <div
+                  key={idx}
+                  className={`group p-5 bg-[#112240] border border-slate-700/50 border-l-4 ${config.border} rounded-xl transition-all hover:translate-y-[-4px] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-slate-600`}
+                  style={{ animationDelay: `${idx * 0.08}s` }}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Icon badge */}
+                    <div className={`p-2.5 rounded-xl flex-shrink-0 ${config.iconBg} group-hover:scale-110 transition-transform`}>
+                      {config.icon}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <h3 className="text-sm font-bold text-white leading-snug">{insight.title}</h3>
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${config.pill}`}>
+                          {config.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed">{insight.message}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Trend Analysis */}
@@ -521,6 +663,7 @@ const Analytics = () => {
           )}
         </div>
       </div>
+
     </div>
   );
 };
