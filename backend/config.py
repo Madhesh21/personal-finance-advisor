@@ -19,3 +19,23 @@ def get_db_connection():
     """Return a new MySQL connection using shared config."""
     conn = mysql.connector.connect(**DB_CONFIG)
     return conn
+
+
+# ── LLM Configuration ─────────────────────────────────────────────────────────
+
+def get_llm_config() -> dict:
+    """
+    Returns LLM provider settings read from the shared .env file.
+
+    Required .env keys:
+      LLM_PROVIDER  = groq | gemini | ollama   (default: groq)
+      LLM_API_KEY   = your API key             (not needed for ollama)
+      LLM_MODEL     = model name               (optional, sensible defaults applied)
+      OLLAMA_URL    = http://localhost:11434    (only for ollama provider)
+    """
+    return {
+        "provider":   os.getenv("LLM_PROVIDER", "groq"),
+        "api_key":    os.getenv("LLM_API_KEY", ""),
+        "model":      os.getenv("LLM_MODEL", "llama-3.3-70b-versatile"),
+        "ollama_url": os.getenv("OLLAMA_URL", "http://localhost:11434"),
+    }
