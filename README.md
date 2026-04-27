@@ -33,7 +33,7 @@ A full-stack **AI-powered personal finance dashboard** that helps users track tr
 | 📈 **Analytics** | Interactive Recharts visualizations — trends (area/line chart) and category distribution |
 | 💡 **AI Insights** | Actionable financial recommendations based on your spending patterns |
 | 🎯 **Budgets** | Set monthly budget limits per category, track spend vs budget, receive alerts |
-| 💬 **Chatbot** | NLP-powered chatbot (spaCy) that answers natural language financial questions |
+| 💬 **AI Chatbot** | Conversational LLM (Groq/Llama 3) with Context Injection to answer natural language questions about your data |
 | 📤 **CSV Upload** | Bulk import transactions from a structured CSV file |
 
 ---
@@ -44,7 +44,7 @@ A full-stack **AI-powered personal finance dashboard** that helps users track tr
 - **Python 3.10+** + **Flask** — REST API
 - **MySQL** — Relational database
 - **scikit-learn** — Naive Bayes ML categorizer (TF-IDF + MultinomialNB)
-- **spaCy** (`en_core_web_sm`) — NLP for the chatbot intent engine
+- **Groq API** — Extremely fast LLM inference for the Chatbot (Llama 3.3)
 - **NLTK** — Text processing utilities
 - **pandas / numpy** — Data processing for analytics
 
@@ -166,7 +166,7 @@ The backend reads database credentials from `database/.env`. This file is **not 
    New-Item -Name ".env" -ItemType "file"
    ```
 
-2. Open the file and add your MySQL credentials:
+2. Open the file and add your MySQL credentials and LLM configuration:
 
    ```env
    DB_HOST=127.0.0.1
@@ -174,9 +174,16 @@ The backend reads database credentials from `database/.env`. This file is **not 
    DB_USER=root
    DB_PASSWORD=your_mysql_password_here
    DB_NAME=personal_finance
+
+   # ── LLM Chatbot Configuration ──
+   # LLM_PROVIDER can be 'groq', 'gemini', or 'ollama'
+   LLM_PROVIDER=groq
+   # Get a free API key from https://console.groq.com/keys
+   LLM_API_KEY=gsk_your_groq_api_key_here
+   LLM_MODEL=llama-3.3-70b-versatile
    ```
 
-   > Replace `your_mysql_password_here` with your actual MySQL root password.
+   > Replace `your_mysql_password_here` with your actual MySQL root password, and grab a free API key from Groq to enable the conversational chatbot.
 
 ---
 
@@ -206,13 +213,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**4c. Download the spaCy language model** (required for the Chatbot):
-
-```bash
-python -m spacy download en_core_web_sm
-```
-
-**4d. Initialize the database** (creates DB, tables, and seeds default categories + a default user):
+**4c. Initialize the database** (creates DB, tables, and seeds default categories + a default user):
 
 ```bash
 # Run from the project root
