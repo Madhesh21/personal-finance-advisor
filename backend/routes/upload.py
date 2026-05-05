@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from utils.csv_parser import parse_csv
 from utils.db_helper import get_category_map, bulk_insert_transactions
 import mysql.connector
@@ -14,6 +15,7 @@ def _allowed_file(filename: str) -> bool:
 
 
 @upload_bp.route('/api/upload/csv', methods=['POST'])
+@jwt_required()
 def upload_csv():
     """
     POST /api/upload/csv
@@ -44,7 +46,7 @@ def upload_csv():
     if not _allowed_file(file.filename):
         return jsonify({"success": False, "error": "Only .csv files are accepted"}), 400
 
-    user_id = request.form.get('user_id', 1, type=int)
+    user_id = get_jwt_identity()
 
     # ── Parse CSV ───────────────────────────────────────────────────────────
     try:

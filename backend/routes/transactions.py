@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import get_db_connection
 import mysql.connector
 from datetime import datetime
@@ -7,20 +8,9 @@ transactions_bp = Blueprint('transactions', __name__)
 
 
 @transactions_bp.route('/api/transactions', methods=['GET'])
+@jwt_required()
 def get_transactions():
-    """
-    GET /api/transactions
-    Returns transactions for a user with optional filters.
-    Query params:
-      - user_id     : int     (default: 1)
-      - category_id : int     (optional)
-      - type        : INCOME | EXPENSE  (optional)
-      - start_date  : YYYY-MM-DD        (optional)
-      - end_date    : YYYY-MM-DD        (optional)
-      - limit       : int     (default: 50)
-      - offset      : int     (default: 0)
-    """
-    user_id     = request.args.get('user_id', 1, type=int)
+    user_id     = get_jwt_identity()
     category_id = request.args.get('category_id', None, type=int)
     tx_type     = request.args.get('type', None)
     start_date  = request.args.get('start_date', None)
@@ -34,15 +24,10 @@ def get_transactions():
 
         query  = """
             SELECT
-                t.transaction_id,
-                t.user_id,
-                t.amount,
-                t.transaction_type,
-                t.transaction_date,
-                t.description,
-                t.created_at,
-                c.category_id,
-                c.category_name
+                t.transaction_id, t.user_id, t.amount,
+                t.transaction_type, t.transaction_date,
+                t.description, t.created_at,
+                c.category_id, c.category_name
             FROM transactions t
             JOIN categories c ON t.category_id = c.category_id
             WHERE t.user_id = %s
@@ -72,78 +57,50 @@ def get_transactions():
         cursor.execute(query, params)
         transactions = cursor.fetchall()
 
-        # Convert non-JSON-serialisable types
         for row in transactions:
             row['amount']           = float(row['amount'])
             row['transaction_date'] = str(row['transaction_date'])
             row['created_at']       = str(row['created_at'])
 
-        # Total count (for pagination)
-        count_query  = "SELECT COUNT(*) AS total FROM transactions WHERE user_id = %s"
-        count_params = [user_id]
-        cursor.execute(count_query, count_params)
+        count_query = "SELECT COUNT(*) AS total FROM transactions WHERE user_id = %s"
+        cursor.execute(count_query, [user_id])
         total = cursor.fetchone()['total']
 
         return jsonify({
-            "success": True,
-            "data":    transactions,
-            "total":   total,
-            "limit":   limit,
-            "offset":  offset
+            "success": True, "data": transactions,
+            "total": total, "limit": limit, "offset": offset
         }), 200
 
     except mysql.connector.Error as err:
         return jsonify({"success": False, "error": str(err)}), 500
     finally:
         if 'conn' in locals() and conn.is_connected():
-            cursor.close()
-            conn.close()
+            cursor.close(); conn.close()
 
 
 @transactions_bp.route('/api/transactions', methods=['POST'])
+@jwt_required()
 def add_transaction():
-    """
-    POST /api/transactions
-    Manually add a single transaction.
-    Body (JSON): {
-        "user_id":          1,
-        "category_id":      3,
-        "amount":           150.00,
-        "transaction_type": "EXPENSE",
-        "transaction_date": "2026-03-28",
-        "description":      "Grocery shopping"
-    }
-    """
+    user_id = get_jwt_identity()
     data = request.get_json()
     if not data:
         return jsonify({"success": False, "error": "No JSON body provided"}), 400
 
-    # Extract fields
-    user_id         = data.get('user_id', 1)
-    category_id     = data.get('category_id')
-    amount          = data.get('amount')
-    transaction_type = data.get('transaction_type')
-    if transaction_type:
-        transaction_type = transaction_type.upper()
+    category_id      = data.get('category_id')
+    amount           = data.get('amount')
+    transaction_type = data.get('transaction_type', 'EXPENSE').upper()
     transaction_date = data.get('transaction_date', datetime.now().strftime('%Y-%m-%d'))
-    description     = data.get('description', '').strip()[:255]
+    description      = data.get('description', '').strip()[:255]
 
     try:
         conn   = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # ── Auto-detect/Enforce type if category is known ─────────────────────
         cursor.execute("SELECT category_type FROM categories WHERE category_id = %s", (category_id,))
         cat_row = cursor.fetchone()
-        
         if cat_row:
-            # Overwrite user-provided type if it conflicts with category type
             transaction_type = cat_row['category_type']
-        elif not transaction_type:
-            # Fallback if category not found (shouldn't happen with valid FK)
-            transaction_type = 'EXPENSE'
 
-        # Validate
         errors = []
         if category_id is None:
             errors.append("category_id is required")
@@ -157,56 +114,40 @@ def add_transaction():
             datetime.strptime(str(transaction_date), '%Y-%m-%d')
         except ValueError:
             errors.append("transaction_date must be in YYYY-MM-DD format")
-
         if errors:
             return jsonify({"success": False, "errors": errors}), 400
 
         cursor.execute(
-            """
-            INSERT INTO transactions
-                (user_id, category_id, amount, transaction_type, transaction_date, description)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """,
+            "INSERT INTO transactions "
+            "(user_id, category_id, amount, transaction_type, transaction_date, description) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
             (user_id, category_id, float(amount), transaction_type, transaction_date, description)
         )
         conn.commit()
         new_id = cursor.lastrowid
 
-        # Return the newly created transaction
         cursor.execute(
-            """
-            SELECT t.*, c.category_name
-            FROM transactions t
-            JOIN categories c ON t.category_id = c.category_id
-            WHERE t.transaction_id = %s
-            """,
-            (new_id,)
+            "SELECT t.*, c.category_name FROM transactions t "
+            "JOIN categories c ON t.category_id = c.category_id "
+            "WHERE t.transaction_id = %s", (new_id,)
         )
         new_tx = cursor.fetchone()
         new_tx['amount']           = float(new_tx['amount'])
         new_tx['transaction_date'] = str(new_tx['transaction_date'])
         new_tx['created_at']       = str(new_tx['created_at'])
 
-        return jsonify({
-            "success": True,
-            "message": "Transaction added",
-            "data":    new_tx
-        }), 201
+        return jsonify({"success": True, "message": "Transaction added", "data": new_tx}), 201
 
     except mysql.connector.Error as err:
         return jsonify({"success": False, "error": str(err)}), 500
     finally:
         if 'conn' in locals() and conn.is_connected():
-            cursor.close()
-            conn.close()
+            cursor.close(); conn.close()
 
 
 @transactions_bp.route('/api/transactions/<int:transaction_id>', methods=['DELETE'])
+@jwt_required()
 def delete_transaction(transaction_id):
-    """
-    DELETE /api/transactions/<id>
-    Delete a specific transaction by ID.
-    """
     try:
         conn   = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -218,35 +159,22 @@ def delete_transaction(transaction_id):
         if not cursor.fetchone():
             return jsonify({"success": False, "error": "Transaction not found"}), 404
 
-        cursor.execute(
-            "DELETE FROM transactions WHERE transaction_id = %s",
-            (transaction_id,)
-        )
+        cursor.execute("DELETE FROM transactions WHERE transaction_id = %s", (transaction_id,))
         conn.commit()
 
-        return jsonify({
-            "success": True,
-            "message": f"Transaction {transaction_id} deleted"
-        }), 200
+        return jsonify({"success": True, "message": f"Transaction {transaction_id} deleted"}), 200
 
     except mysql.connector.Error as err:
         return jsonify({"success": False, "error": str(err)}), 500
     finally:
         if 'conn' in locals() and conn.is_connected():
-            cursor.close()
-            conn.close()
+            cursor.close(); conn.close()
 
 
 @transactions_bp.route('/api/transactions/summary', methods=['GET'])
+@jwt_required()
 def transaction_summary():
-    """
-    GET /api/transactions/summary
-    Returns total income, total expense, and net balance for a user.
-    Query params:
-      - user_id    : int      (default: 1)
-      - month_year : YYYY-MM  (optional, filters to that month)
-    """
-    user_id    = request.args.get('user_id', 1, type=int)
+    user_id    = get_jwt_identity()
     month_year = request.args.get('month_year', None)
 
     try:
@@ -254,11 +182,8 @@ def transaction_summary():
         cursor = conn.cursor(dictionary=True)
 
         base_query = """
-            SELECT
-                transaction_type,
-                SUM(amount) AS total
-            FROM transactions
-            WHERE user_id = %s
+            SELECT transaction_type, SUM(amount) AS total
+            FROM transactions WHERE user_id = %s
         """
         params = [user_id]
 
@@ -275,13 +200,11 @@ def transaction_summary():
         for row in rows:
             totals[row['transaction_type']] = float(row['total'])
 
-        net_balance = totals['INCOME'] - totals['EXPENSE']
-
         return jsonify({
-            "success":     True,
+            "success":       True,
             "total_income":  totals['INCOME'],
             "total_expense": totals['EXPENSE'],
-            "net_balance":   net_balance,
+            "net_balance":   totals['INCOME'] - totals['EXPENSE'],
             "month_year":    month_year or "all-time"
         }), 200
 
@@ -289,5 +212,4 @@ def transaction_summary():
         return jsonify({"success": False, "error": str(err)}), 500
     finally:
         if 'conn' in locals() and conn.is_connected():
-            cursor.close()
-            conn.close()
+            cursor.close(); conn.close()

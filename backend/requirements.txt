@@ -1,5 +1,6 @@
 flask
 flask-cors
+flask-jwt-extended
 mysql-connector-python
 python-dotenv
 pandas
@@ -10,3 +11,4 @@ joblib
 nltk
 spacy
 groq
+bcrypt

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axiosAuth from '../utils/axiosAuth';
 import { Settings as SettingsIcon, Tag, Plus, Info } from 'lucide-react';
 
 const Settings = () => {
@@ -14,7 +14,7 @@ const Settings = () => {
     setCatSubmitting(true);
     setCatMsg('');
     try {
-      const res = await axios.post('/api/categories', {
+      const res = await axiosAuth.post('/api/categories', {
         category_name: catName.trim(),
         category_type: catType,
       });

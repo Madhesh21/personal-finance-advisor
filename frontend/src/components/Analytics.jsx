@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosAuth from '../utils/axiosAuth';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Sector, LabelList,
   ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -221,7 +221,7 @@ const Analytics = () => {
     else setInsightsLoading(true);
     try {
       const targetMonth = viewType === 'Monthly' ? monthYear : new Date().toISOString().slice(0, 7);
-      const res = await axios.get(`/api/recommendations?month_year=${targetMonth}`);
+      const res = await axiosAuth.get(`/api/recommendations?month_year=${targetMonth}`);
       if (res.data.success) setInsights(res.data.data);
     } catch (err) {
       console.error('Insights fetch error:', err);
@@ -241,9 +241,9 @@ const Analytics = () => {
           : `months=all`;
 
         const [mRes, dRes, tRes] = await Promise.all([
-          axios.get(`/api/analytics/metrics?month_year=${targetMonth}`),
-          axios.get(`/api/analytics/distribution?month_year=${targetMonth}`),
-          axios.get(`/api/analytics/trends?${trendParams}`),
+          axiosAuth.get(`/api/analytics/metrics?month_year=${targetMonth}`),
+          axiosAuth.get(`/api/analytics/distribution?month_year=${targetMonth}`),
+          axiosAuth.get(`/api/analytics/trends?${trendParams}`),
         ]);
         
         if (mRes.data.success) setMetrics(mRes.data.data);

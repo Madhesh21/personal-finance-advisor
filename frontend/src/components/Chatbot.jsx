@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import axiosAuth from '../utils/axiosAuth';
 import { Send, Bot, User, Sparkles, RefreshCw, ChevronDown } from 'lucide-react';
 
 // ── Suggestion chips ──────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ const Chatbot = () => {
       // Send last 10 messages as history (excluding the one we're sending now)
       const history = messages.slice(-10);
 
-      const res = await axios.post('/api/chat', {
+      const res = await axiosAuth.post('/api/chat', {
         message:    msg,
         month_year: selectedMonth,
         history,

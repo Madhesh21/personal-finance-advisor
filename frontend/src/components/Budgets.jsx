@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosAuth from '../utils/axiosAuth';
 import { Target, Plus, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 
 const MonthPicker = ({ value, onChange }) => (
@@ -44,9 +44,9 @@ const Budgets = () => {
     setLoading(true);
     try {
       const [sumRes, alertRes, catRes] = await Promise.all([
-        axios.get(`/api/budgets/summary?month_year=${monthYear}`),
-        axios.get(`/api/budgets/alerts?month_year=${monthYear}`),
-        axios.get('/api/categories?type=EXPENSE'),
+        axiosAuth.get(`/api/budgets/summary?month_year=${monthYear}`),
+        axiosAuth.get(`/api/budgets/alerts?month_year=${monthYear}`),
+        axiosAuth.get('/api/categories?type=EXPENSE'),
       ]);
       if (sumRes.data.success) setSummary(sumRes.data.data);
       if (alertRes.data.success) setAlerts(alertRes.data.alerts ?? []);
@@ -65,7 +65,7 @@ const Budgets = () => {
     setIsSubmitting(true);
     setFormMsg('');
     try {
-      const res = await axios.post('/api/budgets', {
+      const res = await axiosAuth.post('/api/budgets', {
         category_id: parseInt(formCatId),
         monthly_limit: parseFloat(formLimit),
         month_year: monthYear,
@@ -86,12 +86,13 @@ const Budgets = () => {
   const handleDelete = async (budgetId) => {
     if (!window.confirm('Delete this budget?')) return;
     try {
-      await axios.delete(`/api/budgets/${budgetId}`);
+      await axiosAuth.delete(`/api/budgets/${budgetId}`);
       fetchAll();
     } catch (err) {
       console.error('Delete error:', err);
     }
   };
+
 
   if (loading) {
     return (

@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 _env_path = os.path.join(os.path.dirname(__file__), '..', 'database', '.env')
 load_dotenv(_env_path)
 
+# ── JWT ───────────────────────────────────────────────────────────────────────
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me-in-production")
+
 DB_CONFIG = {
     "host":     os.getenv("DB_HOST", "127.0.0.1"),
     "port":     int(os.getenv("DB_PORT", 3306)),

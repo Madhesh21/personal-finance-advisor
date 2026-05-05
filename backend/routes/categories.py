@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from config import get_db_connection
 import mysql.connector
 
@@ -6,6 +7,7 @@ categories_bp = Blueprint('categories', __name__)
 
 
 @categories_bp.route('/api/categories', methods=['GET'])
+@jwt_required()
 def get_categories():
     """
     GET /api/categories
@@ -39,6 +41,7 @@ def get_categories():
 
 
 @categories_bp.route('/api/categories', methods=['POST'])
+@jwt_required()
 def add_category():
     """
     POST /api/categories

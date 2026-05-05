@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from utils.financial_context import get_financial_context
 from utils.llm_service import call_llm
@@ -32,6 +33,7 @@ Guidelines:
 # ── Chat endpoint ─────────────────────────────────────────────────────────────
 
 @chatbot_bp.route('/api/chat', methods=['POST'])
+@jwt_required()
 def chat():
     """
     POST /api/chat
@@ -43,7 +45,7 @@ def chat():
     """
     data       = request.get_json() or {}
     message    = data.get('message', '').strip()
-    user_id    = data.get('user_id', 1)
+    user_id    = get_jwt_identity()
     month_year = data.get('month_year', datetime.now().strftime('%Y-%m'))
     raw_history = data.get('history', [])
 

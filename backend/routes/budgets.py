@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import get_db_connection
 import mysql.connector
 from datetime import datetime
@@ -45,15 +46,9 @@ def _compute_alert(category_name: str, budget_limit: float,
 # ── GET /api/budgets ─────────────────────────────────────────────────────────
 
 @budgets_bp.route('/api/budgets', methods=['GET'])
+@jwt_required()
 def get_budgets():
-    """
-    GET /api/budgets
-    Returns all budget limits for a user.
-    Query params:
-      - user_id:    int    (default: 1)
-      - month_year: YYYY-MM (default: current month)
-    """
-    user_id    = request.args.get('user_id', 1, type=int)
+    user_id    = get_jwt_identity()
     month_year = request.args.get('month_year', datetime.now().strftime('%Y-%m'))
 
     try:
@@ -87,22 +82,13 @@ def get_budgets():
 # ── POST /api/budgets ────────────────────────────────────────────────────────
 
 @budgets_bp.route('/api/budgets', methods=['POST'])
+@jwt_required()
 def set_budget():
-    """
-    POST /api/budgets
-    Set or update a monthly budget for a category (upsert).
-    Body (JSON): {
-        "user_id":       1,
-        "category_id":   3,
-        "monthly_limit": 500.00,
-        "month_year":    "2026-04"   (optional, defaults to current month)
-    }
-    """
     data = request.get_json()
     if not data:
         return jsonify({"success": False, "error": "No JSON body provided"}), 400
 
-    user_id       = data.get('user_id', 1)
+    user_id       = get_jwt_identity()
     category_id   = data.get('category_id')
     monthly_limit = data.get('monthly_limit')
     month_year    = data.get('month_year', datetime.now().strftime('%Y-%m'))
@@ -165,6 +151,7 @@ def set_budget():
 # ── DELETE /api/budgets/<budget_id> ─────────────────────────────────────────
 
 @budgets_bp.route('/api/budgets/<int:budget_id>', methods=['DELETE'])
+@jwt_required()
 def delete_budget(budget_id):
     """
     DELETE /api/budgets/<budget_id>
@@ -195,19 +182,9 @@ def delete_budget(budget_id):
 # ── GET /api/budgets/summary ─────────────────────────────────────────────────
 
 @budgets_bp.route('/api/budgets/summary', methods=['GET'])
+@jwt_required()
 def budget_summary():
-    """
-    GET /api/budgets/summary
-    Returns actual vs planned spending per category for a given month.
-    Now includes:
-      - percent_used  : (actual / limit) * 100
-      - alert         : Human-readable alert string or null
-
-    Query params:
-      - user_id:    int    (default: 1)
-      - month_year: YYYY-MM (default: current month)
-    """
-    user_id    = request.args.get('user_id', 1, type=int)
+    user_id    = get_jwt_identity()
     month_year = request.args.get('month_year', datetime.now().strftime('%Y-%m'))
     year, month = month_year.split('-')
 
@@ -276,17 +253,9 @@ def budget_summary():
 # ── GET /api/budgets/alerts ──────────────────────────────────────────────────
 
 @budgets_bp.route('/api/budgets/alerts', methods=['GET'])
+@jwt_required()
 def budget_alerts():
-    """
-    GET /api/budgets/alerts
-    Returns only categories that have an active alert (warning or exceeded).
-    Useful for rendering a clean alert/notification panel in the frontend.
-
-    Query params:
-      - user_id:    int    (default: 1)
-      - month_year: YYYY-MM (default: current month)
-    """
-    user_id    = request.args.get('user_id', 1, type=int)
+    user_id    = get_jwt_identity()
     month_year = request.args.get('month_year', datetime.now().strftime('%Y-%m'))
     year, month = month_year.split('-')
 

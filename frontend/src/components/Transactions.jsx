@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import axiosAuth from '../utils/axiosAuth';
 import { Plus, Receipt, Upload, Download, CheckCircle, XCircle, FileText } from 'lucide-react';
 
 const Transactions = () => {
@@ -31,8 +31,8 @@ const Transactions = () => {
     setLoading(true);
     try {
       const [txRes, catRes] = await Promise.all([
-        axios.get('/api/transactions'),
-        axios.get('/api/categories'),
+        axiosAuth.get('/api/transactions'),
+        axiosAuth.get('/api/categories'),
       ]);
       if (txRes.data.success) setTransactions(txRes.data.data);
       if (catRes.data.success) setCategories(catRes.data.data);
@@ -48,7 +48,7 @@ const Transactions = () => {
     setIsSubmitting(true);
     setMessage('');
     try {
-      const res = await axios.post('/api/transactions', {
+      const res = await axiosAuth.post('/api/transactions', {
         amount: parseFloat(amount),
         category_id: parseInt(categoryId),
         description,
@@ -76,7 +76,7 @@ const Transactions = () => {
     const formData = new FormData();
     formData.append('file', csvFile);
     try {
-      const res = await axios.post('/api/upload/csv', formData, {
+      const res = await axiosAuth.post('/api/upload/csv', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setCsvResult(res.data);
@@ -94,7 +94,7 @@ const Transactions = () => {
 
   const handleDownloadTemplate = async () => {
     try {
-      const res = await axios.get('/api/upload/template', { responseType: 'blob' });
+      const res = await axiosAuth.get('/api/upload/template', { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
       a.href = url;

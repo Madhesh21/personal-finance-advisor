@@ -5,6 +5,7 @@ Entry point: registers all blueprints and starts the dev server.
 
 import os
 import sys
+from datetime import timedelta
 
 # Ensure the backend directory is on the Python path so that
 # 'from config import ...' and 'from utils import ...' work correctly
@@ -12,7 +13,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from flask import Flask, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 
+from config import JWT_SECRET_KEY
+from routes.auth         import auth_bp
 from routes.transactions import transactions_bp
 from routes.categories   import categories_bp
 from routes.budgets      import budgets_bp
@@ -26,15 +30,33 @@ from routes.chatbot      import chatbot_bp
 def create_app() -> Flask:
     app = Flask(__name__)
 
-    # ── CORS ────────────────────────────────────────────────────────────────
-    # Allow requests from any origin during development.
-    # Tighten this to your frontend URL in production.
+    # ── JWT Configuration ────────────────────────────────────────────────────
+    app.config['JWT_SECRET_KEY']       = JWT_SECRET_KEY
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
+
+    jwt = JWTManager(app)
+
+    # ── JWT Error Handlers ───────────────────────────────────────────────────
+    @jwt.unauthorized_loader
+    def missing_token(reason):
+        return jsonify({"success": False, "error": "Authentication required", "reason": reason}), 401
+
+    @jwt.invalid_token_loader
+    def invalid_token(reason):
+        return jsonify({"success": False, "error": "Invalid token", "reason": reason}), 422
+
+    @jwt.expired_token_loader
+    def expired_token(jwt_header, jwt_payload):
+        return jsonify({"success": False, "error": "Token has expired"}), 401
+
+    # ── CORS ─────────────────────────────────────────────────────────────────
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    # ── Max upload size (16 MB) ─────────────────────────────────────────────
+    # ── Max upload size (16 MB) ───────────────────────────────────────────────
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-    # ── Register Blueprints ─────────────────────────────────────────────────
+    # ── Register Blueprints ───────────────────────────────────────────────────
+    app.register_blueprint(auth_bp)
     app.register_blueprint(transactions_bp)
     app.register_blueprint(categories_bp)
     app.register_blueprint(budgets_bp)
@@ -44,31 +66,29 @@ def create_app() -> Flask:
     app.register_blueprint(analytics_bp)
     app.register_blueprint(chatbot_bp)
 
-    # ── Health-check route ──────────────────────────────────────────────────
+    # ── Health-check route ────────────────────────────────────────────────────
     @app.route('/api/health', methods=['GET'])
     def health():
-        return jsonify({
-            "status":  "ok",
-            "version": "1.0.0",
-            "service": "Personal Finance Advisor API"
-        }), 200
+        return jsonify({"status": "ok", "version": "1.0.0",
+                        "service": "Personal Finance Advisor API"}), 200
 
-    # ── Root info route ─────────────────────────────────────────────────────
+    # ── Root info route ───────────────────────────────────────────────────────
     @app.route('/', methods=['GET'])
     def index():
         return jsonify({
             "message": "Personal Finance Advisor API is running.",
             "endpoints": {
-                "health":             "GET  /api/health",
+                "register":           "POST /api/auth/register",
+                "login":              "POST /api/auth/login",
+                "me":                 "GET  /api/auth/me",
+                "logout":             "POST /api/auth/logout",
                 "transactions":       "GET  /api/transactions",
                 "add_transaction":    "POST /api/transactions",
                 "delete_transaction": "DELETE /api/transactions/<id>",
                 "tx_summary":         "GET  /api/transactions/summary",
                 "categories":         "GET  /api/categories",
-                "add_category":       "POST /api/categories",
                 "budgets":            "GET  /api/budgets",
                 "set_budget":         "POST /api/budgets",
-                "delete_budget":      "DELETE /api/budgets/<id>",
                 "budget_summary":     "GET  /api/budgets/summary",
                 "budget_alerts":      "GET  /api/budgets/alerts",
                 "recommendations":    "GET  /api/recommendations",
@@ -76,12 +96,11 @@ def create_app() -> Flask:
                 "analytics_dist":     "GET  /api/analytics/distribution",
                 "analytics_metrics":  "GET  /api/analytics/metrics",
                 "upload_csv":         "POST /api/upload/csv",
-                "csv_template":       "GET  /api/upload/template",
-                "chatbot":            "POST /api/chat"
+                "chatbot":            "POST /api/chat",
             }
         }), 200
 
-    # ── Global error handlers ───────────────────────────────────────────────
+    # ── Global error handlers ─────────────────────────────────────────────────
     @app.errorhandler(404)
     def not_found(e):
         return jsonify({"success": False, "error": "Endpoint not found"}), 404
@@ -103,8 +122,4 @@ def create_app() -> Flask:
 
 if __name__ == '__main__':
     flask_app = create_app()
-    flask_app.run(
-        host='0.0.0.0',
-        port=5000,
-        debug=True
-    )
+    flask_app.run(host='0.0.0.0', port=5000, debug=True)
