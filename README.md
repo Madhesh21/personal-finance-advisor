@@ -27,6 +27,7 @@ A full-stack **AI-powered personal finance dashboard** that helps users track tr
 
 | Feature | Description |
 |---|---|
+| 🔐 **Authentication** | Secure JWT-based Sign In and Sign Up system with protected routes |
 | 📊 **Dashboard** | Live summary of income, expenses, net balance, and savings rate |
 | 💳 **Transactions** | Add, view, delete, and filter financial transactions manually or via CSV import |
 | 🤖 **AI Categorization** | Dual-engine system (Rule-based + Naive Bayes ML) auto-categorizes transactions |
@@ -42,6 +43,7 @@ A full-stack **AI-powered personal finance dashboard** that helps users track tr
 
 ### Backend
 - **Python 3.10+** + **Flask** — REST API
+- **Flask-JWT-Extended** — Secure user authentication
 - **MySQL** — Relational database
 - **scikit-learn** — Naive Bayes ML categorizer (TF-IDF + MultinomialNB)
 - **Groq API** — Extremely fast LLM inference for the Chatbot (Llama 3.3)
@@ -72,6 +74,7 @@ financial-advisor/
 │   │   └── model_store/        # Auto-generated — saved trained model (.pkl)
 │   ├── routes/
 │   │   ├── analytics.py        # GET /api/analytics/* — trends, distribution, metrics
+│   │   ├── auth.py             # POST /api/auth/* — login, register, logout
 │   │   ├── budgets.py          # GET/POST/DELETE /api/budgets/*
 │   │   ├── categories.py       # GET/POST /api/categories
 │   │   ├── categorize.py       # POST /api/categorize — ML categorization endpoint
@@ -98,7 +101,15 @@ financial-advisor/
     └── src/
         ├── main.jsx
         ├── App.jsx             # Root component with routing
+        ├── context/
+        │   └── AuthContext.jsx # Global JWT auth state provider
+        ├── utils/
+        │   ├── api.js          # Base URL configuration
+        │   └── axiosAuth.js    # Axios instance with JWT interceptors
         └── components/
+            ├── ProtectedRoute.jsx  # Wrapper for auth-required routes
+            ├── SignIn.jsx          # User login page
+            ├── SignUp.jsx          # User registration page
             ├── Dashboard.jsx       # Overview cards + quick stats
             ├── Transactions.jsx    # Transaction list, add form, CSV upload
             ├── Analytics.jsx       # Charts + AI insights section
@@ -297,6 +308,10 @@ Expected output:
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/health` | Health check |
+| `POST` | `/api/auth/register` | Register a new user |
+| `POST` | `/api/auth/login` | Log in a user (Returns JWT) |
+| `GET` | `/api/auth/me` | Get current user profile (Requires JWT) |
+| `POST` | `/api/auth/logout` | Log out |
 | `GET` | `/api/transactions` | List all transactions |
 | `POST` | `/api/transactions` | Add a new transaction |
 | `DELETE` | `/api/transactions/<id>` | Delete a transaction |
@@ -366,17 +381,13 @@ The Naive Bayes model (`backend/ml/model_store/nb_model.pkl`) is auto-generated 
 
 ---
 
-## 👥 Default Credentials
+## 👥 Authentication & Credentials
 
-After running `init_mysql.py`, a default user is created automatically:
+After running the application, you will be directed to the **Sign In** page.
 
-| Field | Value |
-|---|---|
-| **User ID** | `1` |
-| **Name** | `Default User` |
-| **Email** | `user@example.com` |
+If this is your first time, click **Sign Up** to create a new account. Your data will be securely isolated using your unique user profile.
 
-All API calls default to `user_id=1` unless specified otherwise.
+> Note: If you ran `init_mysql.py` previously, a `user@example.com` default profile exists in the DB but does not have a password set. It is recommended to create a new account via the UI.
 
 ---
 
@@ -390,7 +401,7 @@ users ──< user_corrections >── categories
 
 | Table | Purpose |
 |---|---|
-| `users` | User accounts |
+| `users` | User accounts (includes `password_hash` for authentication) |
 | `categories` | Income/Expense categories (e.g., Salary, Food, Rent) |
 | `transactions` | All financial transactions linked to user + category |
 | `budgets` | Monthly budget limits per category per user |
